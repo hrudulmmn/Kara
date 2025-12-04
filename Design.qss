@@ -1,0 +1,53 @@
+QPushButton[class="tools"]{
+    color: #F7F7F7;
+    padding: 10px;
+    background: transparent;
+    border: none;
+}
+QPushButton[class="tools"]:hover{
+    background-color: #4C7DDA;
+    border-radius: 6px;
+}
+
+#navbar{
+    background-color: #F7F7F7;
+    padding:4px;
+    padding-left:10px;
+    padding-right:10px;
+    max-height: 38px;
+    border-radius:6px;
+    border-bottom: 1px solid #D0D5DD;
+}
+
+#pdf{
+    background-color: #F9F2DC
+    
+}
+#Area{
+    color: #F9FAFB;
+    background-color: #4C7DDA
+}
+
+#frame{
+  background-color: #244480;  
+}
+
+#Sumbtn{
+    border: none;
+    background-color: #F7D86A;
+    padding: 10px;
+}
+#Sumbtn:hover{
+    background-color: #4C7DDA;
+    border-radius: 6px;
+}
+
+#close{
+    border: none;
+    background: transparent;
+    padding: 10px;
+}
+#close:hover{
+    background-color: #4C7DDA;
+    border-radius: 6px;
+}
