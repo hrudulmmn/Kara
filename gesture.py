@@ -75,52 +75,53 @@ class Gesture(QObject):
                         ring = fingUp(norm,16,14)
                         smol = fingUp(norm,20,18)
 
-                        if(middle and index and thumb and not ring and not smol and not self.befTaktActive and norm[8][1]<-0.15):
-                            if(self.time-self.taktTime>=self.taktcooldown and not self.enabled):
-                                self.takt.emit(True)
-                                self.taktTime = self.time
-                                self.befTaktActive = True
-                                self.enabled = True
-                            elif(self.time-self.taktTime>=self.taktcooldown and self.enabled):
-                                self.takt.emit(False)
-                                self.taktTime = self.time
-                                self.befTaktActive = True
-                                self.enabled = False
-                        else:
-                            self.befTaktActive = False
+                        if(middle and index and thumb and not ring and not smol):
+                            if(middle and index and thumb and not ring and not smol and not self.befTaktActive and norm[8][1]<-0.15):
+                                if(self.time-self.taktTime>=self.taktcooldown and not self.enabled):
+                                    self.takt.emit(True)
+                                    self.taktTime = self.time
+                                    self.befTaktActive = True
+                                    self.enabled = True
+                                elif(self.time-self.taktTime>=self.taktcooldown and self.enabled):
+                                    self.takt.emit(False)
+                                    self.taktTime = self.time
+                                    self.befTaktActive = True
+                                    self.enabled = False
+                            else:
+                                self.befTaktActive = False
 
                         direction = middle and index and thumb and ring and smol
+                        if (direction):
+                            if(direction and norm[12][0]<-0.15 and not self.befPrevActive):
+                                if(self.time-self.prevTime>=self.cooldown):
+                                    self.prevPage.emit()
+                                    self.befPrevActive = True
+                                    self.prevTime = self.time
+                            else:
+                                self.befPrevActive = False
+                                
+                            if(direction and norm[12][0]>0.15 and not self.befNextActive):
+                                if(self.time-self.nextTime>=self.cooldown):
+                                    self.nextPage.emit()
+                                    self.befNextActive = True
+                                    self.nextTime = self.time
+                            else:
+                                self.befNextActive = False
 
-                        if(direction and norm[12][0]<-0.15 and not self.befPrevActive):
-                            if(self.time-self.prevTime>=self.cooldown):
-                                self.prevPage.emit()
-                                self.befPrevActive = True
-                                self.prevTime = self.time
-                        else:
-                            self.befPrevActive = False
-                            
-                        if(direction and norm[12][0]>0.15 and not self.befNextActive):
-                            if(self.time-self.nextTime>=self.cooldown):
-                                self.nextPage.emit()
-                                self.befNextActive = True
-                                self.nextTime = self.time
-                        else:
-                            self.befNextActive = False
+                            #zoom
+                        elif(index and thumb and not middle and not ring and not smol):
+                                a = norm[4]
+                                b = norm[8]
+                                
+                                dist = math.sqrt((a[0]-b[0])**2 + (a[1]-b[1])**2)
+                                threshold = 0.01
 
-                        #zoom
-                        if(index and thumb and not middle and not ring and not smol):
-                            a = norm[4]
-                            b = norm[8]
-                            
-                            dist = math.sqrt((a[0]-b[0])**2 + (a[1]-b[1])**2)
-                            threshold = 0.01
-
-                            pinch = dist
-                            if(pinch-self.lastpinch>threshold):
-                                self.zoom.emit(+1)
-                            if(pinch-self.lastpinch<-threshold):
-                                self.zoom.emit(-1)
-                            self.lastpinch = pinch
+                                pinch = dist
+                                if(pinch-self.lastpinch>threshold):
+                                    self.zoom.emit(+1)
+                                if(pinch-self.lastpinch<-threshold):
+                                    self.zoom.emit(-1)
+                                self.lastpinch = pinch
 
                 cv2.imshow("Camera",frame)
                 if cv2.waitKey(1) & 0xFF==ord('q'):
