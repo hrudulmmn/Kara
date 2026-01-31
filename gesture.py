@@ -1,8 +1,52 @@
 import cv2
 import mediapipe as mp
 import math 
+import numpy as np
 from PyQt6.QtCore import pyqtSignal,QObject,QThread
 import time
+
+class Smoother:
+    def __init__(self,alpha=0.55):
+        self.alpha=alpha
+        self.smoothedland=None
+    
+    def smooth(self,landmarks):
+        current=np.array(landmarks)
+
+        if self.smoothedland is None:
+            self.smoothedland=current
+            return current
+        
+        self.smoothedland=(self.alpha*current + (1-self.alpha)*self.smoothedland)
+        return self.smoothedland
+    
+    def reset(self):
+        self.smoothedland=None
+
+class GestureChecker:
+    def __init__(self,min=75):
+        self.minhold=min
+        self.isactive={}
+        self.activetime={}
+
+    def trigger(self,gesturename,detected,time):
+        if gesturename not in self.activetime:
+            self.isactive[gesturename]=False
+            self.activetime[gesturename]=None
+        if detected:
+            if self.activetime[gesturename] is None:
+                self.activetime[gesturename]=time
+                return False
+            holdtime = time-self.activetime[gesturename]
+
+            if holdtime>=self.minhold and not self.isactive[gesturename]:
+                self.isactive[gesturename]=True
+                return True
+            return False
+        else:
+            self.isactive[gesturename]=False
+            self.activetime[gesturename]=None
+            return False
 
 class Gesture(QObject):
     nextPage = pyqtSignal()
@@ -17,25 +61,23 @@ class Gesture(QObject):
         self.enabled = False
         self.active = False
 
-        self.befNextActive = False
-        self.befPrevActive = False
-        self.befTaktActive = False
-
         self.nextTime = 0.0
         self.prevTime = 0.0
         self.taktTime = 0.0
-        self.cooldown = 700
-        self.taktcooldown = 1000
+        self.cooldown = 350
+        self.taktcooldown = 600
         self.lastpinch=0
 
+        self.smoother = Smoother(alpha=0.55)
+        self.checker = GestureChecker(min=75)
 
     def run(self):
         capture = cv2.VideoCapture(0)
         hand = self.hands.Hands(
                     static_image_mode = False,
                     max_num_hands = 1,
-                    min_detection_confidence = 0.5,
-                    min_tracking_confidence = 0.5
+                    min_detection_confidence = 0.7,
+                    min_tracking_confidence = 0.7
                 )
         
         try:
@@ -65,53 +107,55 @@ class Gesture(QObject):
                             x = point.x - wristx
                             y = point.y - wristy
                             norm.append((x,y))
-                        
-                        def fingUp(norm,tip,pip):
-                            return norm[tip][1]<norm[pip][1]
-                        
-                        thumb = fingUp(norm,4,2)
-                        index = fingUp(norm,8,6)
-                        middle = fingUp(norm,12,10)
-                        ring = fingUp(norm,16,14)
-                        smol = fingUp(norm,20,18)
+                        smoothedNorm = self.smoother.smooth(norm)
 
-                        if(middle and index and thumb and not ring and not smol):
-                            if(middle and index and thumb and not ring and not smol and not self.befTaktActive and norm[8][1]<-0.15):
-                                if(self.time-self.taktTime>=self.taktcooldown and not self.enabled):
-                                    self.takt.emit(True)
-                                    self.taktTime = self.time
-                                    self.befTaktActive = True
-                                    self.enabled = True
-                                elif(self.time-self.taktTime>=self.taktcooldown and self.enabled):
-                                    self.takt.emit(False)
-                                    self.taktTime = self.time
-                                    self.befTaktActive = True
-                                    self.enabled = False
-                            else:
-                                self.befTaktActive = False
+                        def fingUp(smoothedNorm,tip,pip):
+                            return smoothedNorm[tip][1]<smoothedNorm[pip][1]
+                        
+                        thumb = fingUp(smoothedNorm,4,2)
+                        index = fingUp(smoothedNorm,8,6)
+                        middle = fingUp(smoothedNorm,12,10)
+                        ring = fingUp(smoothedNorm,16,14)
+                        smol = fingUp(smoothedNorm,20,18)
 
+                        takt = middle and index and thumb and not ring and not smol and smoothedNorm[8][1]<-0.15
+
+                        if(self.checker.trigger("takt",takt,self.time)):
+                            if(self.time-self.taktTime>=self.taktcooldown and not self.enabled):
+                                self.takt.emit(True)
+                                self.taktTime = self.time
+                                self.enabled = True
+                            elif(self.time-self.taktTime>=self.taktcooldown and self.enabled):
+                                self.takt.emit(False)
+                                self.taktTime = self.time
+                                self.enabled = False
+                    
+                        move=None
                         direction = middle and index and thumb and ring and smol
-                        if (direction):
-                            if(direction and norm[12][0]<-0.15 and not self.befPrevActive):
-                                if(self.time-self.prevTime>=self.cooldown):
+                        if(direction):
+                            dx=smoothedNorm[12][0]
+                            if dx<-0.22:
+                                move="prev"
+                            elif dx>0.22:
+                                move="next"
+
+                        if (move):
+                            if(self.checker.trigger(move,True,self.time)):
+                                if(move=="prev" and self.time-self.prevTime>=self.cooldown):
                                     self.prevPage.emit()
-                                    self.befPrevActive = True
                                     self.prevTime = self.time
-                            else:
-                                self.befPrevActive = False
-                                
-                            if(direction and norm[12][0]>0.15 and not self.befNextActive):
-                                if(self.time-self.nextTime>=self.cooldown):
+                        
+                                if(move=="next" and self.time-self.nextTime>=self.cooldown):
                                     self.nextPage.emit()
-                                    self.befNextActive = True
                                     self.nextTime = self.time
-                            else:
-                                self.befNextActive = False
+                        else:
+                            self.checker.trigger("prev",False,self.time)
+                            self.checker.trigger("next",False,self.time)
 
                             #zoom
-                        elif(index and thumb and not middle and not ring and not smol):
-                                a = norm[4]
-                                b = norm[8]
+                        if(index and thumb and not middle and not ring and not smol):
+                                a = smoothedNorm[4]
+                                b = smoothedNorm[8]
                                 
                                 dist = math.sqrt((a[0]-b[0])**2 + (a[1]-b[1])**2)
                                 threshold = 0.01
@@ -122,6 +166,8 @@ class Gesture(QObject):
                                 if(pinch-self.lastpinch<-threshold):
                                     self.zoom.emit(-1)
                                 self.lastpinch = pinch
+                else:
+                    self.smoother.reset()
 
                 cv2.imshow("Camera",frame)
                 if cv2.waitKey(1) & 0xFF==ord('q'):
