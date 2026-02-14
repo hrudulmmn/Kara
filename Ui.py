@@ -11,7 +11,7 @@ import render
 import summarise
 from gesture import GestureMan
 
-ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("PediFile.App")
+ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("Kara.App")
 
 class Window(QMainWindow):
     def __init__(self):
@@ -24,7 +24,7 @@ class Window(QMainWindow):
         self.zoom=1.2
         self.control = GestureMan()
 
-        icpath = self.resource_path("assets\PediFile_logo.png")
+        icpath = self.resource_path("assets\Kara.png")
         self.setWindowIcon(QIcon(icpath))
         
         #pdf render area
@@ -245,12 +245,14 @@ class Window(QMainWindow):
         self.pageSum = summarise.pagesummarise(self.doc,self.page,content)
         html = markdown.markdown(self.pageSum)
         self.split.setSizes([600,200])
+        self.togbtn.setVisible(False)
         self.sumArea.setText(html)
     
     def close(self):
         if not self.doc:
             return
         self.split.setSizes([1,0])
+        self.togbtn.setVisible(True)
 
             
     

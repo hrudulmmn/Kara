@@ -6,7 +6,7 @@ app = QApplication(sys.argv)
 with open("Design.qss","r") as style:
             app.setStyleSheet(style.read())
 window = Window()
-window.setWindowTitle("PediFile")
+window.setWindowTitle("Kara")
 window.resize(1000,750)
 window.show()
 window.checkstate()
