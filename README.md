@@ -19,11 +19,8 @@ Built for distraction-free study sessions and accessibility.
 ## 🛠️ Tech Stack
 - Python, OpenCV + MediaPipe, PyMuPDF, Groq API, PyQt6
 
-## 📹 Demo Video (plays directly on GitHub)
-<video width="100%" controls>
-  <source src="https://github.com/hrudulmmn/Kara/releases/tag/Demo_vid" type="video/mp4">
-  Your browser does not support the video tag.
-</video>
+## 📹 Demo Video 
+**Watch the full demo** → [Kara Demo Video (Release)](https://github.com/hrudulmmn/Kara/releases/download/Demo_vid/Kara.demo.1.mp4)
 
 ## 📂 Project Structure
 ```
