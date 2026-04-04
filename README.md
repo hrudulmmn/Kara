@@ -21,7 +21,7 @@ Built for distraction-free study sessions and accessibility.
 
 ## 📹 Demo Video (plays directly on GitHub)
 <video width="100%" controls>
-  <source src="https://github.com/hrudulmmn/Kara/blob/master/Kara%20demo%20(1).mp4" type="video/mp4">
+  <source src="https://github.com/hrudulmmn/Kara/releases/tag/Demo_vid" type="video/mp4">
   Your browser does not support the video tag.
 </video>
 
