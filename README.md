@@ -20,7 +20,7 @@ Built for distraction-free study sessions and accessibility.
 - Python, OpenCV + MediaPipe, PyMuPDF, Groq API, PyQt6
 
 ## 📹 Demo Video 
-**Watch the full demo** → [Kara Demo Video (Release)](https://github.com/hrudulmmn/Kara/releases/download/Demo_vid/Kara.demo.1.mp4)
+**Watch the full demo** → [Kara Demo Video (Release)](https://github.com/hrudulmmn/Kara/releases/tag/Demo_vid)
 
 ## 📂 Project Structure
 ```
